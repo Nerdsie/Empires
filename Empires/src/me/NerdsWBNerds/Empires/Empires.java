@@ -45,6 +45,16 @@ public class Empires extends JavaPlugin{
 		
 		return null;
 	}
+
+	public static Empire getEmpire(String name){
+		for(Empire e : empires){
+			if(e.name.startsWith(name)){
+				return e;
+			}
+		}
+		
+		return null;
+	}
 	
 	public static boolean inEmpire(Player player){
 		if(getEmpire(player)==null)
@@ -67,18 +77,8 @@ public class Empires extends JavaPlugin{
 		}
 		return getEmpire(player).getPlayer(player).title;
 	}
-	
-	public static void save(Object obj,String path) throws Exception{
-		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path));
-		oos.writeObject(obj);
-		oos.flush();
-		oos.close();
-	}
-	
-	public static Object load(String path) throws Exception{
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path));
-		Object result = ois.readObject();
-		ois.close();
-		return result;
+
+	public static int getPopulation(Empire e){
+		return e.people.size() + 1;
 	}
 }

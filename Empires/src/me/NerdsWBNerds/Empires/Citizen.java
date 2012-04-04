@@ -10,4 +10,12 @@ public class Citizen {
 		player = p;
 		title = t;
 	}
+	
+	public String getTitle(){
+		return title;
+	}
+	
+	public String getName(){
+		return player.getName();
+	}
 }

@@ -47,4 +47,18 @@ public class Empire {
 		
 		return null;
 	}
+	
+	public Citizen getPlayer(int i){		
+		return people.get(i);
+	}
+	
+	public String getTitle(Player player){
+		for(Citizen c: people){
+			if(c.player == player){
+				return c.title;
+			}
+		}
+		
+		return null;
+	}
 }
