@@ -8,12 +8,14 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Empires extends JavaPlugin{
 	private EListener Listener = new EListener(this);
 	private FileHandling config = new FileHandling(this);
+	public static Server server;
 	public Logger log;
 	String base = null;
 
@@ -27,6 +29,7 @@ public class Empires extends JavaPlugin{
 
 		Listener.server = this.getServer();
 		Listener.log = log;
+		server = getServer();
 		config.load();
 		
 		getServer().getPluginManager().registerEvents(Listener, this);
@@ -38,7 +41,7 @@ public class Empires extends JavaPlugin{
 	
 	public static Empire getEmpire(Player player){
 		for(Empire e : empires){
-			if(e.people.contains(player) || e.King == player){
+			if(e.people.contains(e.getPlayer(player)) || e.King.equalsIgnoreCase(player.getName())){
 				return e;
 			}
 		}
@@ -48,7 +51,17 @@ public class Empires extends JavaPlugin{
 
 	public static Empire getEmpire(String name){
 		for(Empire e : empires){
-			if(e.name.startsWith(name)){
+			if(e.people.contains(e.getPlayer(name)) || e.King.equalsIgnoreCase(name)){
+				return e;
+			}
+		}
+		
+		return null;
+	}
+
+	public static Empire getEmpireFromName(String name){
+		for(Empire e : empires){
+			if(e.name.toLowerCase().startsWith(name.toLowerCase())){
 				return e;
 			}
 		}
@@ -63,8 +76,15 @@ public class Empires extends JavaPlugin{
 		return true;			
 	}
 	
+	public static boolean inEmpire(String player){
+		if(getEmpire(player)==null)
+			return false;
+		
+		return true;			
+	}
+	
 	public static boolean isKing(Player player){
-		if(inEmpire(player) && getEmpire(player).King == player){
+		if(inEmpire(player) && getEmpire(player).King.equalsIgnoreCase(player.getName())){
 			return true;
 		}
 		

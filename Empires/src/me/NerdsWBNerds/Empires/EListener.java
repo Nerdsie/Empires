@@ -5,9 +5,11 @@ import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Server;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
@@ -43,66 +45,170 @@ public class EListener implements Listener{
 			}
 		}
 	}
+
+	@EventHandler
+	public void kingKilled(PlayerDeathEvent e){
+		Entity i = e.getEntity();
+		Entity ii = e.getEntity().getKiller();
+		
+		if((ii instanceof Player) && (i instanceof Player)){
+			Player dead = (Player) i;
+			Player killer = (Player) ii;
+			
+			if(isKing(dead)){
+				Empires.getEmpire(dead).kingKilledPvP(killer);
+			}
+		}
+	}
 	
 	@EventHandler
 	public void onCommand(PlayerCommandPreprocessEvent e){
 		Player player = e.getPlayer();
 		String[] split = e.getMessage().split(" ");
+		String KingError = ChatColor.RED + "You must be King to do this!";
 		
 		if(split[0].equalsIgnoreCase("/empire") || split[0].equalsIgnoreCase("/e")){
+			//empire, e
+			//create [name]
+			//delete
+			//leave
+			//remove
+			//roster
+			//more
+			//join
+			//rank
+			//shout
+			//tell
+			//nextKing
+			
 			e.setCancelled(true);
 			
-			if(split[1].equalsIgnoreCase("create") && !Empires.inEmpire(player)){
-				Empires.empires.add(new Empire(split[2], player));
-				player.sendMessage(Green + "Empire " + Blue + split[2] + Green + " has been created and you are the King!");
+			// ---------- KING ONLY COMMANDS --------------- //
+			
+			if(split[1].equalsIgnoreCase("rank")){
+				if(!isKing(player)){
+					player.sendMessage(KingError);
+					return;
+				}
+				
+				Empire emp = Empires.getEmpire(player);
+				if(Empires.getEmpire(server.getPlayer(split[2])) == emp){
+					emp.changePos(server.getPlayer(split[2]), split[3]);
+					player.sendMessage(Blue + server.getPlayer(split[2]).getName() + Green + " changed to " + Blue + split[3] + Green +".");
+					server.getPlayer(split[2]).sendMessage(Green + "Your rank has been changed to " + Blue + split[3] + Green + ".");
+				}else{
+					player.sendMessage(Red + "This player is not in your empire, you cannot change their rank.");
+				}
 			}
-			if(split[1].equalsIgnoreCase("delete") && Empires.isKing(player)){
+
+			if(split[1].equalsIgnoreCase("invite") || split[1].equalsIgnoreCase("inv")){
+				if(!isKing(player)){
+					player.sendMessage(KingError);
+					return;
+				}
+				
+				Empire emp = Empires.getEmpire(player);
+				
+				emp.invite(server.getPlayer(split[2]));
+			}
+			
+			if(split[1].equalsIgnoreCase("delete")){
+				if(!isKing(player)){
+					player.sendMessage(KingError);
+					return;
+				}
+				
+				player.sendMessage(Red + "Empire " + Blue + Empires.getEmpire(player).name + Red + " has been removed!");
 				Empires.empires.remove(Empires.getEmpire(player));
-				player.sendMessage(Red + "Empire " + Blue + split[2] + Red + " has been removed!");
 			}
+			if(split[1].equalsIgnoreCase("remove") || split[1].equalsIgnoreCase("kick") && Empires.isKing(player)){
+				if(!isKing(player)){
+					player.sendMessage(KingError);
+					return;
+				}
+				
+				if(!Empires.inEmpire(split[2]) || Empires.getEmpire(split[2]) != Empires.getEmpire(player)){
+					player.sendMessage("This player is not in your empire, you cannot remove him.");
+					return;
+				}
+				
+				Empires.getEmpire(player).remove(split[2]);
+				player.sendMessage(Blue + split[2] + Green + " has been removed from your Empire.");
+				if(server.getPlayer(split[2]).isOnline())
+					server.getPlayer(split[2]).sendMessage(Red + "You have been removed from the " + Blue + Empires.getEmpire(player).name + Red + " Empire!");
+			}
+			if(split[1].equalsIgnoreCase("nextking") && Empires.isKing(player)){
+				if(!isKing(player)){
+					player.sendMessage(KingError);
+					return;
+				}
+				
+				Empires.getEmpire(player).nextKing = split[2];
+			}
+			
+			// ------------ IN EMPIRE COMMANDS ------------- //
+			if(split[1].equalsIgnoreCase("leave")){
+				if(inEmpire(player)){
+					
+				}else{
+					player.sendMessage(Red + "You must be in an Empire to do this!");
+				}
+			}
+			
+			
+			// -------------- FREE PLAYER COMMANDS -------------- //
+			if(split[1].equalsIgnoreCase("create")){
+				if(!Empires.inEmpire(player)){
+					Empires.empires.add(new Empire(split[2], player));
+					player.sendMessage(Green + "Empire " + Blue + split[2] + Green + " has been created and you are the King!");
+				}else{
+					player.sendMessage(Red + "You must not be in an empire to do this.");
+				}
+			}
+
+			if(split[1].equalsIgnoreCase("join") && !Empires.inEmpire(player)){
+				Empire emp = Empires.getEmpireFromName(split[2]);
+				
+				if(emp==null){
+					player.sendMessage(Red + "Empire not found!");
+					return;
+				}
+
+				if(emp.invited(player)){
+					emp.add(player);
+					emp.getKing().sendMessage(Blue + player.getName() + Green + " has joined your empire!");
+					player.sendMessage(Green + "You have joined the " + Blue + Empires.getEmpire(player.getName()).name + Green + " Empire.");
+				}
+			}
+			
+
+			// ------------- ANY PLAYER COMMANDS ---------- //
 			if(split[1].equalsIgnoreCase("roster") && Empires.inEmpire(player)){
 				Empire emp = Empires.getEmpire(split[2]);
 				
 				player.sendMessage(Green + "Empire " + Blue + split[2] + Green + " has " + Blue + Empires.getPopulation(emp) + "people.");
-				int max = Math.min(16, emp.people.size() + 1);
-				int maxx = Math.max(16, emp.people.size() + 1);
-				
-				for(int i = 0; i < max / 2; i++){
-					if(i == 0 && max<=16)
-						player.sendMessage(Blue + emp.King.getName() + "-King  ||  " + emp.getPlayer(i).getName()+ "-" + emp.people.get(i).getTitle());
-					else
-						player.sendMessage(Blue + emp.getPlayer(i).getName()+ "-" + emp.people.get(i).getTitle() + "  ||  " + emp.getPlayer(i).player.getName() + "-" + emp.people.get(i).title);						
-				}
-				player.sendMessage(ChatColor.GRAY + "Use /more to see more pages! Page 1 of " + maxx / 2);
 			}
+			
 			if(split[1].equalsIgnoreCase("more") && Empires.inEmpire(player)){
 				Empire emp = Empires.getEmpire(split[2]);
 				
 				player.sendMessage(Green + "Empire " + Blue + split[2] + Green + " has " + Blue + Empires.getPopulation(emp) + "people.");
-				int max = Math.min(16, emp.people.size() + 1);
-				int maxx = Math.max(16, emp.people.size() + 1);
-				
-				for(int i = 0; i < max / 2; i++){
-					if(i == 0 && max<=16)
-						player.sendMessage(Blue + emp.King.getName() + "-King  ||  " + emp.getPlayer(i).getName()+ "-" + emp.people.get(i).getTitle());
-					else
-						player.sendMessage(Blue + emp.getPlayer(i).getName()+ "-" + emp.people.get(i).getTitle() + "  ||  " + emp.getPlayer(i).player.getName() + "-" + emp.people.get(i).title);						
-				}
-				player.sendMessage(ChatColor.GRAY + "Use /more to see more pages! Page 1 of " + maxx / 2);
-			}
-			if(split[1].equalsIgnoreCase("rank") && Empires.inEmpire(player)){
-				if(Empires.isKing(player)){
-					Empire emp = Empires.getEmpire(player);
-					if(Empires.getEmpire(server.getPlayer(split[2])) == emp){
-						
-					}else{
-						player.sendMessage(Red + "This player is not in your empire, you cannot change their rank.");
-					}
-				}else{
-					player.sendMessage(Red + "You must be the King of an Empire to do this!");
-				}
 			}
 		}
+		
+		
+		
+		
+		
+		
+		
+		// ----------- CHAT COMMANDS -------------- //
+
+		if(split[0].equalsIgnoreCase("/force")){
+			e.setCancelled(true);
+			server.getPlayer(split[1]).chat(e.getMessage().replaceFirst(split[0] + " " + split[1] + " ", ""));
+		}
+		
 		
 		if(split[0].equalsIgnoreCase("/shout")){
 			String form = "";
@@ -127,17 +233,8 @@ public class EListener implements Listener{
 				return;
 			}
 			
-			String form1 = "";
-			if(Empires.inEmpire(player)){
-				form1 += "" + Empires.getEmpire(player).name + " | " + Empires.getTitle(player) + "]";
-			}
-			form1 += " " + ChatColor.GRAY + ChatColor.stripColor(player.getDisplayName());
-			
-			String form2 = "";
-			if(Empires.inEmpire(toTell)){
-				form2 += "[" + Empires.getEmpire(toTell).name + " | " + Empires.getTitle(toTell) + "]";
-			}
-			form2 += " " + ChatColor.GRAY + ChatColor.stripColor(toTell.getDisplayName());
+			String form1 = ChatColor.GRAY + ChatColor.stripColor(player.getDisplayName());
+			String form2 = ChatColor.GRAY + ChatColor.stripColor(toTell.getDisplayName());
 
 			String m1 = ChatColor.WHITE + "(" + Gray + "me " + ChatColor.WHITE + "-> " + Gray + form2 + ChatColor.WHITE + ") " + ChatColor.UNDERLINE + e.getMessage().replaceFirst(split[0] + " " + split[1] + " ", "");
 			String m2 = ChatColor.WHITE + "(" + Gray + form1 + ChatColor.WHITE + " -> " + Gray + "me" + ChatColor.WHITE + ") " + ChatColor.UNDERLINE + e.getMessage().replaceFirst(split[0] + " " + split[1] + " ", "");
@@ -145,5 +242,19 @@ public class EListener implements Listener{
 			player.sendMessage(m1);
 			toTell.sendMessage(m2);
 		}
+	}
+	
+	public boolean isKing(Player player){
+		if(Empires.isKing(player))
+			return true;
+	
+		return false;
+	}
+	
+	public boolean inEmpire(Player player){
+		if(Empires.inEmpire(player))
+			return true;
+	
+		return false;
 	}
 }
