@@ -43,12 +43,7 @@ public class EListener implements Listener{
 			}
 		}
 	}
-
-    /**
-     * READ THIS: PlayerCommandPreproccessEvent is being DEPRECATED for command parsing!
-     *            Use EmpiresCommandExecutor instead!
-     * @deprecated as of 1.1.  Replaced by EmpiresCommandExecutor.
-     */
+	
 	@EventHandler
 	public void onCommand(PlayerCommandPreprocessEvent e){
 		Player player = e.getPlayer();

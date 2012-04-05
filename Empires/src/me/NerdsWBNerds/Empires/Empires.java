@@ -28,13 +28,6 @@ public class Empires extends JavaPlugin{
 		Listener.server = this.getServer();
 		Listener.log = log;
 		config.load();
-
-
-        // [+] -- Added custom command executor.  This ACTUALLY conforms to Bukkit coding standards (brenhein)
-        EmpiresCommandExecutor eExecutor = new EmpiresCommandExecutor(this);
-        getCommand("empire").setExecutor(eExecutor);
-        // [+] -- End addition
-
 		
 		getServer().getPluginManager().registerEvents(Listener, this);
 	}
