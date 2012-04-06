@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Empires:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Empires_jar</output-path>
+    <root id="archive" name="Empires.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/Empires/src/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="Empires" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/bukkit-1.2.4-R1.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
